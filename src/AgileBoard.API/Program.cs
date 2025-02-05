@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using AgileBoard.API.Data; 
+using AgileBoard.API.Data;
+using AgileBoard.API.Services; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Services.AddSwaggerGen();
 // Configure SQL Server
 builder.Services.AddDbContext<AgileBoardContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IBoardService, BoardService>();
 
 var app = builder.Build();
 
