@@ -13,8 +13,9 @@ namespace AgileBoard.API.Models
         [StringLength(500, ErrorMessage = "A descrição deve ter no máximo 500 caracteres")]
         public string? Description { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public virtual ICollection<List> Lists { get; set; } = new List<List>();
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }
 }
