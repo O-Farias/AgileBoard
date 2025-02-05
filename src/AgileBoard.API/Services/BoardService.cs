@@ -20,11 +20,26 @@ namespace AgileBoard.API.Services
 
         public async Task<Board> GetBoardByIdAsync(int id)
         {
-            return await _context.Boards.FindAsync(id);
+            var board = await _context.Boards.FindAsync(id);
+            if (board == null)
+            {
+                throw new KeyNotFoundException($"Board com ID {id} não encontrado.");
+            }
+            return board;
         }
 
         public async Task<Board> CreateBoardAsync(Board board)
         {
+            if (board == null)
+            {
+                throw new ArgumentException("Board não pode ser nulo.");
+            }
+
+            if (string.IsNullOrWhiteSpace(board.Name))
+            {
+                throw new ArgumentException("Nome do board é obrigatório.");
+            }
+
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
             return board;
@@ -32,6 +47,17 @@ namespace AgileBoard.API.Services
 
         public async Task UpdateBoardAsync(Board board)
         {
+            if (board == null)
+            {
+                throw new ArgumentException("Board não pode ser nulo.");
+            }
+
+            var existingBoard = await _context.Boards.FindAsync(board.Id);
+            if (existingBoard == null)
+            {
+                throw new KeyNotFoundException($"Board com ID {board.Id} não encontrado.");
+            }
+
             _context.Entry(board).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
@@ -39,11 +65,13 @@ namespace AgileBoard.API.Services
         public async Task DeleteBoardAsync(int id)
         {
             var board = await _context.Boards.FindAsync(id);
-            if (board != null)
+            if (board == null)
             {
-                _context.Boards.Remove(board);
-                await _context.SaveChangesAsync();
+                throw new KeyNotFoundException($"Board com ID {id} não encontrado.");
             }
+
+            _context.Boards.Remove(board);
+            await _context.SaveChangesAsync();
         }
     }
 }
