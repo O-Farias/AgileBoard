@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using AgileBoard.API.Data;
-using AgileBoard.API.Services; 
+using AgileBoard.API.Services;
+using AgileBoard.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,9 @@ builder.Services.AddDbContext<AgileBoardContext>(options =>
 builder.Services.AddScoped<IBoardService, BoardService>();
 
 var app = builder.Build();
+
+// Adicionar middleware de tratamento de erros
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
