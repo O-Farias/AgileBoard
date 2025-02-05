@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AgileBoard.API.Data;
 using AgileBoard.API.Models;
+using AgileBoard.API.Services;
 
 namespace AgileBoard.API.Controllers
 {
@@ -9,25 +8,25 @@ namespace AgileBoard.API.Controllers
     [ApiController]
     public class BoardsController : ControllerBase
     {
-        private readonly AgileBoardContext _context;
+        private readonly IBoardService _boardService;
 
-        public BoardsController(AgileBoardContext context)
+        public BoardsController(IBoardService boardService)
         {
-            _context = context;
+            _boardService = boardService;
         }
 
         // GET: api/Boards
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Board>>> GetBoards()
         {
-            return await _context.Boards.ToListAsync();
+            return Ok(await _boardService.GetAllBoardsAsync());
         }
 
         // GET: api/Boards/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Board>> GetBoard(int id)
         {
-            var board = await _context.Boards.FindAsync(id);
+            var board = await _boardService.GetBoardByIdAsync(id);
 
             if (board == null)
             {
@@ -41,10 +40,8 @@ namespace AgileBoard.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Board>> PostBoard(Board board)
         {
-            _context.Boards.Add(board);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetBoard), new { id = board.Id }, board);
+            var createdBoard = await _boardService.CreateBoardAsync(board);
+            return CreatedAtAction(nameof(GetBoard), new { id = createdBoard.Id }, createdBoard);
         }
 
         // PUT: api/Boards/5
@@ -56,15 +53,13 @@ namespace AgileBoard.API.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(board).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _boardService.UpdateBoardAsync(board);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!BoardExists(id))
+                if (!await BoardExists(id))
                 {
                     return NotFound();
                 }
@@ -81,21 +76,20 @@ namespace AgileBoard.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBoard(int id)
         {
-            var board = await _context.Boards.FindAsync(id);
+            var board = await _boardService.GetBoardByIdAsync(id);
             if (board == null)
             {
                 return NotFound();
             }
 
-            _context.Boards.Remove(board);
-            await _context.SaveChangesAsync();
+            await _boardService.DeleteBoardAsync(id);
 
             return NoContent();
         }
 
-        private bool BoardExists(int id)
+        private async Task<bool> BoardExists(int id)
         {
-            return _context.Boards.Any(e => e.Id == id);
+            return await _boardService.GetBoardByIdAsync(id) != null;
         }
     }
 }
