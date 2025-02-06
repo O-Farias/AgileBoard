@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using AgileBoard.API.Models;
 using AgileBoard.API.Services;
 
 namespace AgileBoard.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BoardsController : ControllerBase
@@ -15,14 +17,12 @@ namespace AgileBoard.API.Controllers
             _boardService = boardService;
         }
 
-        // GET: api/Boards
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Board>>> GetBoards()
         {
             return Ok(await _boardService.GetAllBoardsAsync());
         }
 
-        // GET: api/Boards/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Board>> GetBoard(int id)
         {
@@ -33,9 +33,8 @@ namespace AgileBoard.API.Controllers
                 return NotFound();
             }
 
-            return board;
+            return Ok(board);
         }
-
         // POST: api/Boards
         [HttpPost]
         public async Task<ActionResult<Board>> PostBoard(Board board)
