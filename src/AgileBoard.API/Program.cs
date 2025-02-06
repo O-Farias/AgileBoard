@@ -27,6 +27,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<BoardValidator>();
 // Add services
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ICardService, CardService>();
+builder.Services.AddScoped<IListService, ListService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Configure SQL Server
 builder.Services.AddDbContext<AgileBoardContext>(options =>
