@@ -1,5 +1,7 @@
 using AgileBoard.API.Data;
 using AgileBoard.API.Models;
+using AgileBoard.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileBoard.API.Services
@@ -7,10 +9,12 @@ namespace AgileBoard.API.Services
     public class CardService : ICardService
     {
         private readonly AgileBoardContext _context;
+        private readonly IHubContext<BoardHub> _hubContext;
 
-        public CardService(AgileBoardContext context)
+        public CardService(AgileBoardContext context, IHubContext<BoardHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<IEnumerable<Card>> GetAllCardsAsync()
@@ -60,6 +64,11 @@ namespace AgileBoard.API.Services
             card.Position = maxPosition + 1;
             _context.Cards.Add(card);
             await _context.SaveChangesAsync();
+
+            // Notificar clientes
+            await _hubContext.Clients.Group(card.List.BoardId.ToString())
+                .SendAsync("CardCreated", card);
+
             return card;
         }
 
@@ -79,11 +88,18 @@ namespace AgileBoard.API.Services
             card.UpdatedAt = DateTime.UtcNow;
             _context.Entry(existingCard).CurrentValues.SetValues(card);
             await _context.SaveChangesAsync();
+
+            // Notificar clientes
+            await _hubContext.Clients.Group(card.List.BoardId.ToString())
+                .SendAsync("CardUpdated", card);
         }
 
         public async Task UpdateCardPositionAsync(int id, int newPosition)
         {
-            var card = await _context.Cards.FindAsync(id);
+            var card = await _context.Cards
+                .Include(c => c.List)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (card == null)
             {
                 throw new KeyNotFoundException($"Card com ID {id} não encontrado.");
@@ -92,11 +108,18 @@ namespace AgileBoard.API.Services
             card.Position = newPosition;
             card.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
+            // Notificar clientes
+            await _hubContext.Clients.Group(card.List.BoardId.ToString())
+                .SendAsync("CardMoved", id, card.ListId, newPosition);
         }
 
         public async Task DeleteCardAsync(int id)
         {
-            var card = await _context.Cards.FindAsync(id);
+            var card = await _context.Cards
+                .Include(c => c.List)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (card == null)
             {
                 throw new KeyNotFoundException($"Card com ID {id} não encontrado.");
@@ -104,6 +127,10 @@ namespace AgileBoard.API.Services
 
             _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
+
+            // Notificar clientes
+            await _hubContext.Clients.Group(card.List.BoardId.ToString())
+                .SendAsync("CardDeleted", id);
         }
     }
 }
