@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using AgileBoard.API.Models;
 using AgileBoard.API.Services;
 
 namespace AgileBoard.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -33,6 +35,15 @@ namespace AgileBoard.API.Controllers
         {
             var user = await _userService.GetUserByEmailAsync(email);
             return Ok(user);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> Register(User user)
+        {
+            var createdUser = await _userService.CreateUserAsync(user);
+            return CreatedAtAction(nameof(GetUser),
+                new { id = createdUser.Id }, createdUser);
         }
 
         [HttpPost]
