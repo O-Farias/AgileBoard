@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using AgileBoard.API.Models;
 using AgileBoard.API.Services;
 
 namespace AgileBoard.API.Controllers
 {
+    [Authorize] 
     [Route("api/[controller]")]
     [ApiController]
     public class ListsController : ControllerBase
